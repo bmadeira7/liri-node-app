@@ -144,3 +144,5 @@ function theWorstFunction() {
     });
 }
 
+//the last thing I wanted to do but I dont understand how to, is to use fs.appendFile to add to my random.txt file to 
+//edit the text and perform a function based on that text.
