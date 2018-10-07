@@ -1,7 +1,7 @@
 require("dotenv").config();
 var Spotify = require('node-spotify-api');
 var request = require("request");
-var bandsintown = require('bandsintown')('codingbootcamp');
+// var bandsintown = require('bandsintown')('codingbootcamp');
 var moment = require('moment');
 var fs = require("fs")
 var keys = require("./keys.js")
@@ -13,19 +13,16 @@ var value = process.argv[3];
 var songVar = "";
 var omdbVar = "";
 var bandVar = "";
+
 //conditionals to run functions based on user input or .txt file
 if (task === "concert-this") {
-    bandsFunction()
-    bandsFunctionTwo(bandVar)
+    bandsFunction(bandVar)
 }
 else if (task === "spotify-this-song") {
-    spotifyFunction()
-    spotifyFunctionTwo(songVar)
+    spotifyFunction(songVar)
 }
 else if (task === "movie-this") {
-    omdbFunction()
-    omdbFunctionTwo(omdbVar)
-
+    omdbFunction(omdbVar)
 }
 else if (task === "do-what-it-says") {
     theWorstFunction()
@@ -37,33 +34,42 @@ else {
 //functions to perform each command
 
 
-function bandsFunction() {
+
+function bandsFunction(bandVar) {
     console.log("Bands in Town")
     if (!value) {
         console.log("NO INPUT???")
     } else {
-
         for (i = 3; i < process.argv.length; i++) {
-            bandVar += process.argv[i] + " ";
+            bandVar += process.argv[i];
         }
-        // console.log("BANDVAR IS: " + bandVar)
+       
+        console.log("Upcoming concerts for: " + bandVar)
     }
+
+    request("https://rest.bandsintown.com/artists/" + bandVar + "/events?app_id=codingbootcamp", function (error, response, body) {
+
+        //this works with drake, nofx, florence and the machine, but NOT with many others...???
+
+        if (!error && response.statusCode === 200) {
+            body = JSON.parse(body)
+            // console.log(body)
+            for (let i = 0; i < body.length; i++) {
+                console.log(body[i].venue.city + ", " + body[i].venue.region + " at " + body[i].venue.name + " " + moment(body[i].datetime).format('MM/DD/YYYY'))
+
+            }
+
+            // console.log("Upcoming concerts for " + bandVar + ":")
+
+        }
+
+    })
 }
-function bandsFunctionTwo(bandVar) {
-    bandsintown
-        .getArtistEventList(value)
-        .then(function (events) {
-            //this works with drake, nofx, florence and the machine, but NOT with many others...???
 
-            console.log("Upcoming concerts for " + bandVar + ":")
-            console.log(events[0].venue.city + ", " + events[0].venue.region + " at " + events[0].venue.name + " " + moment(events[0].datetime).format('MM/DD/YYYY'))
-        });
-
-}
-
-function spotifyFunction() {
+function spotifyFunction(songVar) {
     console.log("spotify")
     if (!value) {
+        console.log("no user input")
         songVar = "Ace of Base The Sign"
     } else {
 
@@ -72,9 +78,7 @@ function spotifyFunction() {
         }
         console.log(songVar)
     }
-}
 
-function spotifyFunctionTwo(songVar) {
 
     spotify.search(
         { type: "track", query: songVar, limit: 1 }, function (error, response) {
@@ -91,21 +95,19 @@ function spotifyFunctionTwo(songVar) {
             }
         });
 
-};
+}
 
-function omdbFunction() {
+
+
+function omdbFunction(omdbVar) {
     if (!value) {
         omdbVar = "Mr. Nobody";
-
+    
     } else {
         for (var i = 3; i < process.argv.length; i++) {
             omdbVar += process.argv[i] + "+";
         }
     }
-
-}
-
-function omdbFunctionTwo(omdbVar) {
 
     request("http://www.omdbapi.com/?t=" + omdbVar + "&y=&plot=short&apikey=trilogy", function (error, response, body) {
         if (!error && response.statusCode === 200) {
@@ -132,16 +134,13 @@ function theWorstFunction() {
             return console.log(error)
         } else {
             var dataSplit = data.split(",")
-            // console.log(dataSplit)
-
             if (dataSplit[0] === "spotify-this-song") {
                 songVar = dataSplit[1]
-                spotifyFunctionTwo(songVar)
+                value = true;
+                spotifyFunction(songVar)
+                
             }
         }
     });
-
-
-
 }
 
